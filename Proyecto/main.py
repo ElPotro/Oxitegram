@@ -7,14 +7,15 @@ from pulsimetro import Pulso
 from machine import Timer, I2C, Pin, ADC
 from ssd1306 import SSD1306_I2C
 from time import sleep
-import time, network  #Importamos el módulo de tiempo time https://docs.python.org/es/3/library/time.html
-import framebuf # Módulo para visualizar imagenes en pbm
+import time, network 
+import framebuf
 from utime import ticks_diff, ticks_us
 from max30102 import MAX30102, MAX30105_PULSE_AMP_MEDIUM
 
 TOKEN = 'N° del token del bot suministrado por telegram'
 bot = Bot(TOKEN)
 
+# Inicialización de los leds que funcionan como indicadores del % de Oxigenación.
 pin_0 = Pin(18, Pin.OUT)
 pin_1 = Pin(5, Pin.OUT)
 pin_2 = Pin(17, Pin.OUT)
@@ -27,7 +28,7 @@ i2c = I2C(0, scl=Pin(22), sda=Pin(21))  #Definimos los pines de la OLED SCL y SD
 oled = SSD1306_I2C(ancho, alto, i2c)
 
 
-# telegram
+# Inicialización del bot de telegram y conexióna la red.
 def conectaWifi (red, password):
       global miRed
       miRed = network.WLAN(network.STA_IF)     
@@ -63,7 +64,7 @@ def telegram_bot_sendtext(bot_message):
 
 
 
-
+# inicialización de la pantalla oled.
 def buscar_icono(ruta):
     dibujo = open(ruta, "rb")  # Abrir en modo lectura de bits https://python-intermedio.readthedocs.io/es/latest/open_function.html
     dibujo.readline() # metodo para ubicarse en la primera linea de los bist
@@ -94,20 +95,17 @@ time.sleep(2)
 oled.fill(0)
 oled.show()
 
+#Pantalla oled indicando la inicialización del sistema.
 while True:
     oled.fill(0)
     '''conversion_factor = 100 / (65535)
     val= int(oledC.datos.sensor.pop_ir_from_storage())'''
-    #oxigeno = float (oledC.datos.sensor.pop_ir_from_storage()*conversion_factor)
     oled.text("************",0,0)    
     oled.text("Lectura",10,10)
-    #oled.text(str(val),10,20)
     oled.text("oxigeno",10,30)                
-    #oled.text(str(oxigeno),0,40)
     oled.text("************",0,50)
     oled.show()
     
-    #print("oxigeno =", oxigeno)
     time.sleep(0.25)
                 
     temporiza = Timer(0)
@@ -118,8 +116,9 @@ while True:
         pin_1.off()
         pin_2.off()
         pin_3.off()
+        # El encendido de los leds sucede dentro de las condiciones que dependen del % del datos obtenido por el sensor.
         
-        
+        # Condicionales que permiten obtener el % del dato, que posteriormente es enviado al telegram, oled y telegram por cada lectura.
         if oledC.datos >= 20 and oledC.datos <= 29 :
             print("% SP02={:02} ".format(oledC.datos))
             oled.fill(0)
@@ -238,7 +237,7 @@ while True:
             test = telegram_bot_sendtext("Sin muestras...")
      
                 
-    #______________________
+    #______________________ Finaliza el ciclo y hace que retorne a la función "desborde"  para que vuelva a leer las muestras obtenidas por el sensor. 
     temporiza.init(period=1000,mode=Timer.PERIODIC,callback=desborde)
     #_______________________
     oledC = Pulso()
